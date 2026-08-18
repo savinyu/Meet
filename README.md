@@ -54,10 +54,15 @@ Meet/
 │
 └── README.md
 ```
-Event	Direction	Payload Structure	Description
-JOIN_ROOM	Client ➔ Server	{ roomId, userId }	Initiates entry into a specific room session.
-USER_JOINED	Server ➔ Client	{ userId }	Broadcasted to existing room participants when a new peer enters.
-OFFER	Client ➔ Server ➔ Client	{ targetId, senderId, sdp }	Relays an SDP session description offer to a target peer.
-ANSWER	Client ➔ Server ➔ Client	{ targetId, senderId, sdp }	Relays the target peer's SDP session description answer back to the offerer.
-ICE_CANDIDATE	Client ➔ Server ➔ Client	{ targetId, senderId, candidate }	Forwards Trickle ICE candidates between peers to establish network routing.
-USER_LEFT	Server ➔ Client	{ userId }	Notifies remaining participants when a peer closes their connection or leaves.
+
+### Signaling Protocol Overview
+
+| Event | Direction | Payload Structure | Description |
+| --- | --- | --- | --- |
+| `JOIN_ROOM` | Client ➔ Server | `{ roomId, userId }` | Initiates entry into a specific room session. |
+| `USER_JOINED` | Server ➔ Client | `{ userId }` | Broadcasted to existing room participants when a new peer enters. |
+| `OFFER` | Client ➔ Server ➔ Client | `{ targetId, senderId, sdp }` | Relays an SDP session description offer to a target peer. |
+| `ANSWER` | Client ➔ Server ➔ Client | `{ targetId, senderId, sdp }` | Relays the target peer's SDP session description answer back to the offerer. |
+| `ICE_CANDIDATE` | Client ➔ Server ➔ Client | `{ targetId, senderId, candidate }` | Forwards Trickle ICE candidates between peers to establish network routing. |
+| `USER_LEFT` | Server ➔ Client | `{ userId }` | Notifies remaining participants when a peer closes their connection or leaves. |
+
