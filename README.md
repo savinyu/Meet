@@ -53,3 +53,11 @@ Meet/
 │   └── package.json
 │
 └── README.md
+
+Event	Direction	Description
+JOIN_ROOM	Client ➔ Server	User requests to join a specific room ID
+USER_JOINED	Server ➔ Client	Notifies existing room participants of a new peer
+OFFER	Client ➔ Server ➔ Client	Relays SDP Offer to target peer
+ANSWER	Client ➔ Server ➔ Client	Relays SDP Answer back to initiating peer
+ICE_CANDIDATE	Client ➔ Server ➔ Client	Relays Trickle ICE candidates between peers
+USER_LEFT	Server ➔ Client	Notifies room peers when a participant disconnects
