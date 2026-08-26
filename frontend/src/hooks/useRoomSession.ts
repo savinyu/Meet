@@ -36,7 +36,12 @@ export default function useRoomSession(roomId : string = "", name : string, stre
         
         //function to create a peer connection
         function createPeerConnection(memberId : number) {
-            const pc = new RTCPeerConnection();
+            const pc = new RTCPeerConnection({
+                iceServers : [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            });
             peerConnections.current.set(memberId, pc);
     
             //send ice candidates
