@@ -1,17 +1,16 @@
 import axios from 'axios'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import MyVideoCard from '../Components/MyVideoCard';
+import VideoCard from '../Components/VideoCard';
+import ActionPanel from '../Components/ActionPanel';
+import useLocalMedia from '../hooks/useLocalMedia'
+import UsernameInput from '../Components/UsernameInput'
 
 export default function Home() {
     const navigate = useNavigate();
+    const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
     const [code, setCode] = useState("");
     const [name, setName] = useState("");
-    const [audio, setAudio] = useState(true);
-
-    useEffect(() => {
-        localStorage.setItem('audio', JSON.stringify(audio));
-    }, [audio]);
 
     const host = window.location.hostname;
     const apiUrl = `http://${host}:3000`;
@@ -47,27 +46,40 @@ export default function Home() {
 
     return (
         <>
-            <h3> This is the Home Page</h3>
             <div>
-                Please enter your name : 
-                <input style={{width : '100px', marginLeft : 20, textAlign : 'center'}} type='text' value={name} placeholder="Your Name" onChange={(e) => {
-                    setName(e.target.value);
-                }}/>
+            <div style={{display : 'flex', justifyContent : 'center', marginTop : '4rem'}}>
+                <UsernameInput value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div style={{display : 'flex', justifyContent : 'space-around', marginTop : 30}}>
-                <button onClick={createRoom}>Create a new Room</button>
+                <button className='button'
+                    onClick={createRoom}>Create a new Room</button>
                 <div>
-                    <button onClick={joinRoom}>Join a Room</button>
-                    <input style={{marginLeft : 20, textAlign : 'center'}} type='text' value={code} placeholder="Room Code" onChange={(e) => {
+                    <button className='button'
+                        onClick={joinRoom}>Join a Room</button>
+                    <input style={{marginLeft : 20, textAlign : 'center', height : '80%'}} type='text' value={code} placeholder="Room Code" onChange={(e) => {
                         setCode(e.target.value);
                     }}/>
                 </div>
             </div>
-            <div style={{marginTop : 50}}>
-                <MyVideoCard/>
+            <div style={{
+                width : '100%',
+                display : 'flex',
+                justifyContent : 'center'
+            }}>
+                <div style={{
+                        marginTop : 50,
+                        height : '40rem',
+                        width : '40rem'
+                    }}>
+                    <VideoCard stream={stream} name={name} muted videoEnabled={videoEnabled} />
+                </div>
             </div>
-            <div>
-                <button onClick={() => setAudio(!audio)} style={{width : "10%", justifyItems : 'center'}}>{audio ? 'Mute' : 'Unmute'}</button>
+            <ActionPanel 
+                audioEnabled={audioEnabled}
+                videoEnabled={videoEnabled}
+                onToggleAudio={toggleAudio}
+                onToggleVideo={toggleVideo}
+                />
             </div>
         </>
     )

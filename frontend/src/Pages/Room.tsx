@@ -3,15 +3,27 @@ import { useState, useEffect, useRef } from 'react'
 import useRoomSession from '../hooks/useRoomSession'
 import useLocalMedia from '../hooks/useLocalMedia'
 import VideoCard from '../Components/VideoCard';
+import ActionPanel from '../Components/ActionPanel';
 
 
 export default function Room() {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const stream = useLocalMedia();
+    const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
     const name = localStorage.getItem('name') ?? "";
-    const {roomMembers, remoteStreams} = useRoomSession(roomId, name, stream);
+    const {roomMembers, remoteStreams, wsRef, userIdRef} = useRoomSession(roomId, name, stream, audioEnabled, videoEnabled);
 
+    useEffect(() => {
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type : 'toggleMedia',
+                from : userIdRef.current,
+                audioEnabled : audioEnabled,
+                videoEnabled : videoEnabled
+            }));
+        }
+    }, [audioEnabled, videoEnabled]);
     useEffect(() => {
         if (!roomId) {
             navigate('/');
@@ -55,13 +67,13 @@ export default function Room() {
     
     return (
         <>
-        <h3> This is the Room Page</h3>
+        <h3> Room Page</h3>
         <div style={{
             position: 'absolute',
             bottom: 20,
             right: 20,
-            width: 240,           // Reduced from large fixed height
-            height: 180,          // Smaller compact footprint
+            width: 240,           
+            height: 180,          
             borderRadius: 12,
             display : 'flex',
             alignItems : 'center',
@@ -71,26 +83,7 @@ export default function Room() {
             zIndex: 10,
             border: '2px solid rgba(255, 255, 255, 0.2)',
         }}> 
-            {stream ? (
-                <VideoCard stream={stream} muted={true}/> 
-                ): ( 
-                    <div style={{
-                        width : 60,
-                        height : 60,
-                        borderRadius : '50%',
-                        color : 'white',
-                        backgroundColor : 'dimgray',
-                        display : 'flex',
-                        alignItems : 'center',
-                        justifyContent : 'center',
-                        fontWeight : 'bold',
-                        fontSize : '32px',
-                        textTransform : 'uppercase'
-                        }}
-                    >
-                        {name?.charAt(0)}
-                    </div>
-                )}
+            <VideoCard stream={stream} muted={true} videoEnabled={videoEnabled} name={name} /> 
         </div>
         <div
         style={{
@@ -122,7 +115,7 @@ export default function Room() {
                 }}
             >
                 {remoteStream ? (
-                <VideoCard stream={remoteStream} />
+                <VideoCard stream={remoteStream} videoEnabled={member.videoEnabled} name={member.name}/>
                 ) : (
                 /* Avatar Fallback for Remote Participant */
                 <div
@@ -167,10 +160,18 @@ export default function Room() {
         })}
         </div>
 
-        <div style={{display :'flex', position : 'absolute', bottom : 10, left : 10, background : 'white', padding : "2px 10px", color : 'black', borderRadius : "5px", alignItems : 'center', fontSize : '12px'}}>
+        <div className='copy' style={{display :'flex', position : 'absolute', bottom : 10, left : 10, background : 'white', padding : "2px 10px", color : 'black', borderRadius : "5px", alignItems : 'center', fontSize : '12px'}}>
             Room Id: {roomId}
             <button onClick={copyToClipboard} style={{marginLeft : 20}}>{copied ? "Copied" : "Copy"}</button>
         </div>
+        <ActionPanel 
+            showPhone 
+            onToggleAudio={toggleAudio}
+            onToggleVideo={toggleVideo}
+            audioEnabled={audioEnabled}
+            videoEnabled={videoEnabled}
+            onHangUp={() => navigate('/')}
+            />
         </>
     )
 }

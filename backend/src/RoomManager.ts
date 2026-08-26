@@ -1,10 +1,12 @@
 import { WebSocket } from 'ws'
 
 export interface User {
-    id : number,
-    name : string,
-    socket : WebSocket,
-    roomId? : string
+    id : number;
+    name : string;
+    socket : WebSocket;
+    roomId? : string;
+    audioEnabled : boolean;
+    videoEnabled : boolean;
 };
 
 export interface Room {
@@ -19,7 +21,6 @@ type ReturnTypes = {success : true, status : "joined-room" }
     | {success : true, status : "removed"} 
     | {success : false, status : "room-already-exists"} 
     | {success : true, status : "room-created"};
-
 
 export class RoomManager {
     private static instance : RoomManager;

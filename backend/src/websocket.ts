@@ -17,7 +17,9 @@ wss.on('connection', (ws) => {
     const user : User = {
         name : id.toString(),
         socket : ws,
-        id : id
+        id : id,
+        audioEnabled : true,
+        videoEnabled : true
     };
 
     //Send the user back his Id
@@ -71,6 +73,12 @@ wss.on('connection', (ws) => {
                         type : "join-room-result",
                         code : response.status
                     }));
+
+                    //set media preferences when joining
+                    if (typeof message.audioEnabled ===  'boolean')
+                        user.audioEnabled = Boolean(message.audioEnabled);
+                    if (typeof message.videoEnabled === 'boolean')
+                        user.videoEnabled = Boolean(message.videoEnabled);
                     
                     const roomMembers = roomManager.findRoomMembers(message.roomId, user.id);
 
@@ -80,12 +88,19 @@ wss.on('connection', (ws) => {
                             member.socket.send(JSON.stringify({
                                 type : "participant-added",
                                 participantId : user.id,
-                                name : user.name
+                                name : user.name,
+                                audioEnabled : user.audioEnabled,
+                                videoEnabled : user.videoEnabled
                             }));
                         }
                     });
 
-                    const participants = roomMembers.filter(member => member.id !== user.id).map((member) => ({id : member.id, name : member.name}));
+                    const participants = roomMembers.map((member) => ({
+                        id : member.id,
+                        name : member.name,
+                        audioEnabled : member.audioEnabled,
+                        videoEnabled : member.videoEnabled
+                    }));
                     
                     //Send the Room Members list to the new Joinee
                     ws.send(JSON.stringify({
@@ -169,6 +184,36 @@ wss.on('connection', (ws) => {
                             code : "receiver-not-connected"
                         }));
                     }
+                    break;
+                }
+                case 'toggleMedia' : {
+                    if (!user.roomId) {
+                        ws.send(JSON.stringify({
+                            type : 'error',
+                            code : 'not-in-room'
+                        }));
+                        break;
+                    }
+
+                    //change the user state
+                    if (typeof message.audioEnabled ===  'boolean')
+                        user.audioEnabled = Boolean(message.audioEnabled);
+                    if (typeof message.videoEnabled === 'boolean')
+                        user.videoEnabled = Boolean(message.videoEnabled);
+
+                    //broadcast to other room members
+                    const roomMembers = roomManager.findRoomMembers(user.roomId, user.id);
+
+                    roomMembers.forEach((member) => {
+                        if (member.socket.readyState === WebSocket.OPEN) {
+                            member.socket.send(JSON.stringify({
+                                type : 'toggleMedia',
+                                from : user.id,
+                                audioEnabled : user.audioEnabled,
+                                videoEnabled : user.videoEnabled
+                            }));
+                        }
+                    });
                     break;
                 }
                 default : {

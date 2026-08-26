@@ -2,16 +2,20 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 type Participant = {
-    id : number,
-    name : string
+    id : number;
+    name : string;
+    audioEnabled : boolean;
+    videoEnabled : boolean;
 }
 
-export default function useRoomSession(roomId : string = "", name : string, stream : MediaStream | null) {
+export default function useRoomSession(roomId : string = "", name : string, stream : MediaStream | null, audioEnabled : boolean, videoEnabled : boolean) {
     
     const [roomMembers, setRoomMembers] = useState<Participant[]>([]);
     const peerConnections = useRef(new Map<number, RTCPeerConnection>());
     const [remoteStreams, setRemoteStreams] = useState(new Map<number, MediaStream>);
     const navigate = useNavigate();
+    const wsRef = useRef<WebSocket>(null);
+    const userIdRef = useRef<number>(null);
 
     const hostname = window.location.hostname;
     const socketUrl = `ws://${hostname}:3000`;
@@ -19,13 +23,16 @@ export default function useRoomSession(roomId : string = "", name : string, stre
     
     const user : Participant = {
         id : -1,
-        name : name
+        name : name,
+        audioEnabled : audioEnabled,
+        videoEnabled : videoEnabled
     }
     
     useEffect(() => {
         if (!stream || roomId === "") return;
 
         const ws = new WebSocket(socketUrl);
+        wsRef.current = ws;
         
         //function to create a peer connection
         function createPeerConnection(memberId : number) {
@@ -66,6 +73,7 @@ export default function useRoomSession(roomId : string = "", name : string, stre
             alert("WebSocket connection failed. Please reload the page.");
         }
 
+        //when websocket connection opens
         ws.onopen = () => {
             ws.send(JSON.stringify({
                 type : "name",
@@ -73,7 +81,9 @@ export default function useRoomSession(roomId : string = "", name : string, stre
             }));
             ws.send(JSON.stringify({
                 type : 'joinRoom',
-                roomId : roomId
+                roomId : roomId,
+                audioEnabled : user.audioEnabled,
+                videoEnabled : user.videoEnabled
             }));
         }
 
@@ -92,14 +102,18 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                 case 'id' : {
                     //gets back one's userId
                     user.id = message.id;
+                    userIdRef.current = user.id;
                     break;
                 }
                 case 'participant-added' : {
                     //tells all the room member that a participant joined 
                     setRoomMembers((current) => {
-                        let updated = current;
-                        updated.push({id : message.participantId, name : message.name});
-                        return updated;
+                        return [...current, {
+                            id : message.participantId,
+                            name : message.name,
+                            audioEnabled : message.audioEnabled,
+                            videoEnabled : message.videoEnabled
+                        }]
                     });
                     break;
                 }
@@ -179,6 +193,18 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                     addIceCandidates();
                     break;
                 }
+                case 'toggleMedia' : {
+                    setRoomMembers((current) => 
+                        current.map((member) => 
+                        member.id === message.from ? {
+                            ...member,
+                            audioEnabled : message.audioEnabled,
+                            videoEnabled : message.videoEnabled
+                        } : 
+                        member
+                    ));
+                    break;
+                }
                 case 'participant-left' : {
                     //close the pc connection 
                     const pc = peerConnections.current.get(message.participantId);
@@ -228,7 +254,9 @@ export default function useRoomSession(roomId : string = "", name : string, stre
 
     return {
         roomMembers,
-        remoteStreams
+        remoteStreams,
+        wsRef,
+        userIdRef
     }
     
 }
