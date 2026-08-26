@@ -17,8 +17,7 @@ export default function useRoomSession(roomId : string = "", name : string, stre
     const wsRef = useRef<WebSocket>(null);
     const userIdRef = useRef<number>(null);
 
-    const hostname = window.location.hostname;
-    const socketUrl = `ws://${hostname}:3000`;
+    const socketUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
     
     const user : Participant = {

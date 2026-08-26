@@ -1,6 +1,7 @@
 **/node_modules
 **/.env
 **/.env.local
+!**/.env.example
 **/dist
 **/build
 .DS_Store

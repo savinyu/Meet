@@ -1,6 +1,11 @@
 import express from 'express'
+import dotenv from 'dotenv'
 import { RoomManager } from './RoomManager.js'
 import cors from 'cors'
+
+dotenv.config();
+const PORT = process.env.PORT || 3000;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const roomManager = RoomManager.getInstance();
 // create an express server
@@ -8,9 +13,8 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin :true
+    origin : CLIENT_URL
 }));
-let port = 3000;
 
 app.post('/room', (req, res) => {
     const roomId = crypto.randomUUID();
@@ -29,6 +33,6 @@ app.post('/room', (req, res) => {
     }
 });
 
-export const server = app.listen(port, "0.0.0.0", () => {
-    console.log("Server is listening on port:", port);
+export const server = app.listen(PORT, () => {
+    console.log("Server is listening on port:", PORT);
 });

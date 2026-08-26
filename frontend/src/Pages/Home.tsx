@@ -12,8 +12,7 @@ export default function Home() {
     const [code, setCode] = useState("");
     const [name, setName] = useState("");
 
-    const host = window.location.hostname;
-    const apiUrl = `http://${host}:3000`;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     
     function setValidateName(name : string) {
         const trimmedName = name.trim();
