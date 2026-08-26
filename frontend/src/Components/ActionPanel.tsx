@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import Mic from '../assets/unmuted.svg?react';
 import MicDisabled from '../assets/muted.svg?react';
 import Phone from '../assets/phone-call.svg?react'
