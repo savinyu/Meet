@@ -37,8 +37,29 @@ export default function useRoomSession(roomId : string = "", name : string, stre
         function createPeerConnection(memberId : number) {
             const pc = new RTCPeerConnection({
                 iceServers : [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    //Google STUN Servers
+                    { urls: [
+                        'stun:stun.l.google.com:19302',
+                        'stun:stun1.l.google.com:19302'
+                    ]},
+                    //Express TURN Server
+                    {
+                        urls : import.meta.env.VITE_EXPRESSTURN_URL,
+                        username : import.meta.env.VITE_EXPRESSTURN_USER,
+                        credential : import.meta.env.VITE_EXPRESSTURN_PASS
+                    },
+                    //METERED TURN SERVER
+                    {
+                        urls : [
+                            import.meta.env.VITE_METERED_URL1,
+                            import.meta.env.VITE_METERED_URL2,
+                            import.meta.env.VITE_METERED_URL3,
+                            import.meta.env.VITE_METERED_URL4,
+
+                        ],
+                        username : import.meta.env.VITE_METERED_USER,
+                        credential : import.meta.env.VITE_METERED_PASS
+                    }
                 ]
             });
             peerConnections.current.set(memberId, pc);
