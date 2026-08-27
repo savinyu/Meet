@@ -12,6 +12,8 @@ export default function Room() {
     const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
     const name = localStorage.getItem('name') ?? "";
     const {roomMembers, remoteStreams, wsRef, userIdRef} = useRoomSession(roomId, name, stream, audioEnabled, videoEnabled);
+    const [copied, setCopied] = useState<boolean>(false);
+    const copiedTimer = useRef<number | null>(null);
 
     useEffect(() => {
         const ws = wsRef.current;
@@ -24,19 +26,25 @@ export default function Room() {
             }));
         }
     }, [audioEnabled, videoEnabled]);
+
     useEffect(() => {
         if (!roomId) {
             navigate('/');
             return;
         }
     }, [roomId, navigate]);
+    
+    useEffect(() => {
+        return () => {
+            if (copiedTimer.current !== null) {
+                window.clearTimeout(copiedTimer.current);
+            }
+        }
+    }, []);
 
     if (!roomId) {
         return <p>Redirecting</p>
     }
-
-    const [copied, setCopied] = useState<boolean>(false);
-    const copiedTimer = useRef<number | null>(null);
 
     async function copyToClipboard() {
         if (!roomId) return;
@@ -53,18 +61,17 @@ export default function Room() {
             copiedTimer.current = null;
         }, 3000);
     }
-
-    useEffect(() => {
-        return () => {
-            if (copiedTimer.current !== null) {
-                window.clearTimeout(copiedTimer.current);
-            }
-        }
-    }, []);
-
-
-
     
+    async function copyOrShare() {
+        copyToClipboard();
+        if (navigator.share) {
+            try {
+                navigator.share({title : 'Join my room :', text : roomId});
+                return;
+            } catch {}
+        }
+    }
+
     return (
         <div className="room-page">
             <h3 className="room-title">
@@ -119,33 +126,10 @@ export default function Room() {
                 })}
             </div>
 
-            <div
-                onClick={copyToClipboard}
-                style={{
-                    position: 'fixed',
-                    top: 12,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '8px 14px',
-                    borderRadius: 999,
-                    background: 'rgba(30, 30, 30, 0.75)',
-                    backdropFilter: 'blur(8px)',
-                    color: '#fff',
-                    fontSize: 13,
-                    zIndex: 20,
-                    cursor: 'pointer',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    maxWidth: 'calc(100vw - 24px)',
-                }}
-                >
-                <span style={{ opacity: 0.7 }}>Room code</span>
-                <code style={{ fontFamily: 'monospace', letterSpacing: '0.08em', fontWeight: 600 }}>
-                    {roomId}
-                </code>
-                <span style={{ fontSize: 12, color: copied ? '#4ade80' : '#c084fc' }}>
+            <div className="room-share" onClick={copyOrShare}>
+                <span className="room-share__label">Room code</span>
+                <code className="room-share__code">{roomId}</code>
+                <span className="room-share__action">
                     {copied ? '✓ Copied' : 'Copy'}
                 </span>
             </div>
