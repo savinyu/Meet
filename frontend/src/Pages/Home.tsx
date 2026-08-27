@@ -9,24 +9,28 @@ import UsernameInput from '../Components/UsernameInput'
 export default function Home() {
     const navigate = useNavigate();
     const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
-    const [code, setCode] = useState("");
-    const [name, setName] = useState("");
+    const [code, setCode] = useState('');
+    const [name, setName] = useState(localStorage.getItem('name') ?? "");
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     
-    function setValidateName(name : string) {
-        const trimmedName = name.trim();
-        setName(trimmedName);
-        if (trimmedName === "") {
-            alert("Invalid Name");
-            return false;
+    function resolveName(raw : string) {
+        let trimmedName = raw.trim();
+        if (trimmedName.length > 15) {
+            trimmedName = trimmedName.slice(0, 15);
         }
-        localStorage.setItem('name', trimmedName);
-        return true;
+        if (trimmedName === '') {
+            sessionStorage.setItem('displayName', 'Anonymous');
+            localStorage.removeItem('name');
+        } else {
+            setName(trimmedName);
+            sessionStorage.setItem('displayName', trimmedName);
+            localStorage.setItem('name', trimmedName);
+        }
     }
 
     async function createRoom() {
-        if (!setValidateName(name)) return;
+        resolveName(name);
         const response = await axios.post(apiUrl+"/room");
         const message = response.data;
 
@@ -37,8 +41,8 @@ export default function Home() {
     }
 
     function joinRoom() {
-        if (!setValidateName(name)) return;
-        if (code !== "") {
+        resolveName(name);
+        if (code !== '') {
             navigate(`/room/${code}`);
         }
     }
@@ -90,9 +94,9 @@ export default function Home() {
                             padding: '8px 12px', 
                             minWidth: 140 
                         }}
-                        type="text"
+                        type='text'
                         value={code}
-                        placeholder="Room Code"
+                        placeholder='Room Code'
                         onChange={(e) => setCode(e.target.value)}
                     />
                 </div>

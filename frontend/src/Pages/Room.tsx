@@ -10,7 +10,7 @@ export default function Room() {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
-    const name = localStorage.getItem('name') ?? "";
+    const name = sessionStorage.getItem('displayName') || localStorage.getItem('name') || 'Anonymous';
     const {roomMembers, remoteStreams, wsRef, userIdRef} = useRoomSession(roomId, name, stream, audioEnabled, videoEnabled);
     const [copied, setCopied] = useState<boolean>(false);
     const copiedTimer = useRef<number | null>(null);
