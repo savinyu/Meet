@@ -23,19 +23,22 @@ export default function ActionPanel({
 } : ActionPanelProps) {
 
     return (
-        <div style={{
-            position : 'absolute',
-            zIndex : 10,
-            bottom : '2%',
-            left : '39%',
-            color : 'white',
-            background : 'rgb(64, 64, 64, 0.6)',
-            padding : '0.5rem',
-            borderRadius : '50%',
-            filter: 'drop-shadow(4px 4px 8px rgb(22, 149, 109))',
-            minWidth : '30rem',
-            display : 'flex',
-            justifyContent : 'space-evenly'
+        <div 
+            style={{
+                position: 'fixed',
+                zIndex: 10,
+                bottom: 'max(1rem, env(safe-area-inset-bottom))',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: 'white',
+                background: 'rgba(64, 64, 64, 0.75)',
+                padding: '0.6rem 1.2rem',
+                borderRadius: 999,
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'center',
+                alignItems: 'center',
+                maxWidth: 'calc(100vw - 2rem)',
             }}>
                 <button 
                     style={{

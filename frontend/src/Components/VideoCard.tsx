@@ -23,52 +23,74 @@ export default function VideoCard({stream, videoEnabled, name, muted = false} : 
     },[stream, videoEnabled]);
 
     return (
-        <>
-                {videoEnabled ? 
-                    <div>
-                        <video 
-                            ref={videoRef} 
-                            autoPlay 
-                            muted={muted} 
-                            playsInline 
-                            style={{
-                                borderRadius : 20,
-                                objectFit : 'cover',
-                                height : '100%',
-                                width : '100%'}}
-                        />
-                    </div>
-                        : (
-                        <div style={{
-                            display : 'flex',
-                            justifyContent : 'center',
-                            alignItems :'center',
-                            width : '100%',
-                            height : '100%',
-                            top : '50%',
-                            background : 'black',
-                            borderRadius : 20,
-
-                        }}>
-                            <div style={{
-                                width : 60,
-                                height : 60,
-                                borderRadius : '50%',
-                                color : 'white',
-                                backgroundColor : 'dimgray',
-                                display : 'flex',
-                                alignItems : 'center',
-                                justifyContent : 'center',
-                                fontWeight : 'bold',
-                                fontSize : '32px',
-                                textTransform : 'uppercase'
-                            }}
-                            >
-                                {name?.charAt(0)}
-                            </div>
-                        </div>
-                        )
-                }
-        </>
-    )
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            borderRadius: 16,
+            overflow: 'hidden',
+            background: '#1a1a1a',
+          }}
+        >
+          {videoEnabled ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              muted={muted}
+              playsInline
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform : 'scaleX(-1)'
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+                background: '#1a1a1a',
+              }}
+            >
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  color: 'white',
+                  backgroundColor: '#3c4043',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: 28,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {name?.charAt(0) || '?'}
+              </div>
+            </div>
+          )}
+      
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 10,
+              left: 10,
+              background: 'rgba(0,0,0,0.55)',
+              color: 'white',
+              padding: '4px 10px',
+              borderRadius: 6,
+              fontSize: 13,
+            }}
+          >
+            {name || 'You'}
+          </div>
+        </div>
+      )
 }
