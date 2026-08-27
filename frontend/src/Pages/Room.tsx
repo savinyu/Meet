@@ -119,11 +119,35 @@ export default function Room() {
                 })}
             </div>
 
-            <div className='room-copy'>
-                <span>Room Id: {roomId}</span>
-                <button onClick={copyToClipboard}>
-                    {copied ? "Copied" : "Copy"}
-                </button>
+            <div
+                onClick={copyToClipboard}
+                style={{
+                    position: 'fixed',
+                    top: 12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '8px 14px',
+                    borderRadius: 999,
+                    background: 'rgba(30, 30, 30, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#fff',
+                    fontSize: 13,
+                    zIndex: 20,
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    maxWidth: 'calc(100vw - 24px)',
+                }}
+                >
+                <span style={{ opacity: 0.7 }}>Room code</span>
+                <code style={{ fontFamily: 'monospace', letterSpacing: '0.08em', fontWeight: 600 }}>
+                    {roomId}
+                </code>
+                <span style={{ fontSize: 12, color: copied ? '#4ade80' : '#c084fc' }}>
+                    {copied ? '✓ Copied' : 'Copy'}
+                </span>
             </div>
             <ActionPanel 
                 showPhone 
