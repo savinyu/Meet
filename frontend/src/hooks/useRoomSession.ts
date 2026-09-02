@@ -24,6 +24,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
     const userIdRef = useRef<number>(null);
     const displayStreamIdRef = useRef<string | null>(null);
     const screenStreamRef = useRef<MediaStream | null>(null);
+    const cameraStreamRef = useRef<MediaStream | null>(null);
 
     const socketUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
@@ -32,10 +33,14 @@ export default function useRoomSession(roomId : string = "", name : string, came
         id : -1,
         name : name,
         audioEnabled : audioEnabled,
-        videoEnabled : !!cameraStream && videoEnabled,
+        videoEnabled : videoEnabled,
         sharingScreen : false,
         displayStreamId : null
     }
+
+    useEffect(() => {
+        cameraStreamRef.current = cameraStream;
+    }, [cameraStream]);
 
     useEffect(() => {
         const ws = wsRef.current;
@@ -134,19 +139,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
                 }));
             } 
 
-            //add tracks
-            cameraStream?.getTracks().forEach((track) => {
-                pc.addTrack(track, cameraStream);
-            });
-
-            //if  Display Stream exists add track
-            if (screenStreamRef.current) {
-                screenStreamRef.current.getTracks().forEach((track) => {
-                    pc.addTrack(track, screenStreamRef.current!);
-                });
-            }
-
-            //negotiation
+            //negotiation handler
             pc.onnegotiationneeded = async () => {
                 try {
                     const offer = await pc.createOffer();
@@ -159,6 +152,21 @@ export default function useRoomSession(roomId : string = "", name : string, came
                     }));
                 } catch {}
             }
+            //add tracks
+            cameraStreamRef.current?.getTracks().forEach((track) => {
+                pc.addTrack(track, cameraStreamRef.current!);
+            });
+
+            //if  Display Stream exists add track
+            screenStreamRef.current?.getTracks().forEach((track) => {
+                pc.addTrack(track, screenStreamRef.current!);
+            });
+
+            if (!cameraStreamRef.current) {
+                pc.addTransceiver('audio', {direction : 'recvonly'});
+                pc.addTransceiver('video', {direction : 'recvonly'});
+            }
+            
 
             pc.ontrack = (event) => {
                 const incoming = event.streams[0];
@@ -391,7 +399,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
             peerConnections.current.clear();
         }
 
-    }, [roomId, cameraStream]);
+    }, [roomId]);
 
     useEffect(() => {
         if (!screenStream) return;
@@ -402,6 +410,16 @@ export default function useRoomSession(roomId : string = "", name : string, came
             })
         });
     }, [screenStream]);
+
+    useEffect(() => {
+        if (!cameraStream) return;
+
+        peerConnections.current.forEach((pc) => {
+            cameraStream.getTracks().forEach((track) => {
+                pc.addTrack(track, cameraStream);
+            })
+        });
+    }, [cameraStream]);
 
     return {
         roomMembers,
