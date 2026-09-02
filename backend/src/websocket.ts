@@ -19,7 +19,9 @@ wss.on('connection', (ws) => {
         socket : ws,
         id : id,
         audioEnabled : true,
-        videoEnabled : true
+        videoEnabled : true,
+        sharingScreen : false,
+        displayStreamId : null
     };
 
     //Send the user back his Id
@@ -67,7 +69,7 @@ wss.on('connection', (ws) => {
                             type : "error",
                             code : response.status
                         }));
-                        return;
+                        break;
                     }
                     ws.send(JSON.stringify({
                         type : "join-room-result",
@@ -95,17 +97,23 @@ wss.on('connection', (ws) => {
                         }
                     });
 
+                    const activeSharer = roomMembers.find(member => member.sharingScreen);
+
                     const participants = roomMembers.map((member) => ({
                         id : member.id,
                         name : member.name,
                         audioEnabled : member.audioEnabled,
-                        videoEnabled : member.videoEnabled
+                        videoEnabled : member.videoEnabled,
+                        sharingScreen : member.sharingScreen,
+                        displayStreamId : member.displayStreamId
                     }));
                     
                     //Send the Room Members list to the new Joinee
                     ws.send(JSON.stringify({
                         type : "room-members",
-                        participants : participants
+                        participants : participants,
+                        activeSharerId : activeSharer ? activeSharer.id : null,
+                        displayStreamId : activeSharer ? activeSharer.displayStreamId : null
                     }));
 
                     break;
@@ -216,6 +224,50 @@ wss.on('connection', (ws) => {
                     });
                     break;
                 }
+                case 'shareScreen' : {
+                    if (!user.roomId) {
+                        ws.send(JSON.stringify({
+                            type : 'error',
+                            code : 'not-in-room'
+                        }));
+                        break;
+                    }
+                    const roomMembers = roomManager.findRoomMembers(user.roomId, user.id);
+                    
+                    const existingSharer = roomMembers.find(member => member.sharingScreen);    //Letting only 1 person share screen at a time
+                    if (existingSharer) {
+                        ws.send(JSON.stringify({
+                            type : 'error',
+                            code : 'someone-already-sharing'
+                        }));
+                        break;
+                    }
+
+                    user.sharingScreen = true;
+                    user.displayStreamId = message.displayStreamId;
+
+                    roomMembers.forEach((member) => {
+                        if (member.socket.readyState === WebSocket.OPEN) {
+                            member.socket.send(JSON.stringify({
+                                type : 'displayStreamId',
+                                from : user.id,
+                                displayStreamId : message.displayStreamId
+                            }));
+                        }
+                    });
+                    break;
+                }
+                case 'stopScreenShare' : {
+                    if (!user.roomId) break;
+
+                    user.sharingScreen = false;
+                    user.displayStreamId = null;
+
+                    const roomMembers = roomManager.findRoomMembers(user.roomId, user.id);
+
+                    screenSharingStoppedBroadcast(roomMembers, user);
+                    break;
+                }
                 default : {
                     ws.send(JSON.stringify({
                         type : "error",
@@ -237,6 +289,10 @@ wss.on('connection', (ws) => {
         if (user.roomId) {
             //notify that a member left 
             const roomMembers = roomManager.findRoomMembers(user.roomId, user.id);
+
+            if (user.sharingScreen) {
+                screenSharingStoppedBroadcast(roomMembers, user);
+            }
 
             roomMembers.forEach((member) =>  {
                 if (member.socket.readyState === WebSocket.OPEN) {
@@ -263,4 +319,15 @@ wss.on('error', (error) => console.log(error));
 //function to find the user id 
 function findUserById(receiverId: number) {
     return roomManager.users.find((user) => user.id === receiverId)
+}
+
+function screenSharingStoppedBroadcast(roomMembers : User[], user : User) {
+    roomMembers.forEach((member) => {
+        if (member.socket.readyState === WebSocket.OPEN) {
+            member.socket.send(JSON.stringify({
+                type : 'screenShareStopped',
+                from : user.id
+            }));
+        }
+    });
 }

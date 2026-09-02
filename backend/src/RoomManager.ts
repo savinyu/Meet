@@ -7,6 +7,8 @@ export interface User {
     roomId? : string;
     audioEnabled : boolean;
     videoEnabled : boolean;
+    sharingScreen : boolean;
+    displayStreamId : String | null;
 };
 
 export interface Room {

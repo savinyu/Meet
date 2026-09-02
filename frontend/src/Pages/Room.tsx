@@ -1,32 +1,27 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import useRoomSession from '../hooks/useRoomSession'
+import useScreenShare from '../hooks/useScreenShare'
 import useLocalMedia from '../hooks/useLocalMedia'
 import VideoCard from '../Components/VideoCard';
 import ActionPanel from '../Components/ActionPanel';
+import ScreenCard from '../Components/ScreenCard'
 
 
 export default function Room() {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
+
+    const {cameraStream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
+    const { screenStream, stopScreenShare, toggleScreenShare } = useScreenShare();
+
     const name = sessionStorage.getItem('displayName') || localStorage.getItem('name') || 'Anonymous';
-    const {roomMembers, remoteStreams, wsRef, userIdRef} = useRoomSession(roomId, name, stream, audioEnabled, videoEnabled);
+
+    const {roomMembers, remoteStreams} = useRoomSession(roomId, name, cameraStream, audioEnabled, videoEnabled, screenStream, stopScreenShare);
+    
     const [copied, setCopied] = useState<boolean>(false);
     const copiedTimer = useRef<number | null>(null);
-
-    useEffect(() => {
-        const ws = wsRef.current;
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type : 'toggleMedia',
-                from : userIdRef.current,
-                audioEnabled : audioEnabled,
-                videoEnabled : videoEnabled
-            }));
-        }
-    }, [audioEnabled, videoEnabled]);
-
+    
     useEffect(() => {
         if (!roomId) {
             navigate('/');
@@ -41,21 +36,21 @@ export default function Room() {
             }
         }
     }, []);
-
+    
     if (!roomId) {
         return <p>Redirecting</p>
     }
-
+    
     async function copyToClipboard() {
         if (!roomId) return;
-
+        
         await navigator.clipboard.writeText(roomId);
         setCopied(true);
-
+        
         if (copiedTimer.current !== null) {
             window.clearTimeout(copiedTimer.current);
         }
-
+        
         copiedTimer.current = window.setTimeout(() => {
             setCopied(false);
             copiedTimer.current = null;
@@ -72,22 +67,27 @@ export default function Room() {
         }
     }
 
+    const cols = roomMembers.length <= 1 ? 1 : 2;
+    const sharerId = roomMembers.find((member) => member.sharingScreen)?.id;
+    const remoteScreen = sharerId ? remoteStreams.get(sharerId)?.screen ?? null : null;
+    const stageStream = screenStream ?? remoteScreen;
+    const isPresenting = !!(stageStream);
+    const someoneIsSharingScreen = sharerId != null;
+
     return (
-        <div className="room-page">
-            <h3 className="room-title">
-                Room Page
-            </h3>
+        <div className={`room-page ${isPresenting ? 'room-page--presenting' : ''}`}>
             <div className="room-pip"> 
                 <VideoCard 
-                    stream={stream} 
+                    cameraStream={cameraStream} 
                     muted={true} 
                     videoEnabled={videoEnabled} 
-                    name={name} 
+                    name={name}
+                    local 
                 /> 
             </div>
-            <div className="room-grid">
+            <div className="room-grid" style={{'--cols' : cols} as React.CSSProperties}>
                 {roomMembers.map((member) => {
-                    const remoteStream = remoteStreams.get(member.id);
+                    const remoteStream = remoteStreams.get(member.id)?.camera;
 
                     return (
                         <div
@@ -96,7 +96,7 @@ export default function Room() {
                         >
                             {remoteStream ? (
                             <VideoCard 
-                                stream={remoteStream} 
+                                cameraStream={remoteStream} 
                                 videoEnabled={member.videoEnabled} 
                                 name={member.name}
                             />
@@ -125,7 +125,11 @@ export default function Room() {
                     );
                 })}
             </div>
-
+                {stageStream && (
+                    <div className='room-stage '>
+                        <ScreenCard stream={stageStream}/>
+                    </div>
+                )}
             <div className="room-share" onClick={copyOrShare}>
                 <span className="room-share__label">Room code</span>
                 <code className="room-share__code">{roomId}</code>
@@ -135,11 +139,17 @@ export default function Room() {
             </div>
             <ActionPanel 
                 showPhone 
+                showScreen
+                screenShareDisabled={someoneIsSharingScreen}
                 onToggleAudio={toggleAudio}
                 onToggleVideo={toggleVideo}
+                onToggleScreenShare={toggleScreenShare}
                 audioEnabled={audioEnabled}
                 videoEnabled={videoEnabled}
-                onHangUp={() => navigate('/')}
+                onHangUp={() => {
+                    stopScreenShare();
+                    navigate('/')
+                }}
                 />
         </div>
     )

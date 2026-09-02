@@ -1,17 +1,18 @@
 import { useRef, useEffect } from 'react'
 
 type VideoCardProps = {
-    stream : MediaStream | null,
-    videoEnabled : boolean,
-    name : string
-    muted? : boolean
+    cameraStream : MediaStream | null;
+    videoEnabled : boolean;
+    name : string;
+    muted? : boolean;
+    local? : boolean;
 }
-export default function VideoCard({stream, videoEnabled, name, muted = false} : VideoCardProps) {
+export default function VideoCard({cameraStream, videoEnabled, name, muted = false, local = false} : VideoCardProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     useEffect(() => {
         async function playStream() {
             if (videoRef.current) {
-                videoRef.current.srcObject = stream;
+                videoRef.current.srcObject = cameraStream;
             }
         }
         playStream();
@@ -20,7 +21,7 @@ export default function VideoCard({stream, videoEnabled, name, muted = false} : 
                 videoRef.current.srcObject = null;
             }
         }
-    },[stream, videoEnabled]);
+    },[cameraStream, videoEnabled]);
 
     return (
         <div
@@ -43,7 +44,7 @@ export default function VideoCard({stream, videoEnabled, name, muted = false} : 
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transform : 'scaleX(-1)'
+                transform : local ? 'scaleX(-1)' : 'none'
               }}
             />
           ) : (

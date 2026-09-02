@@ -3,25 +3,39 @@ import MicDisabled from '../assets/muted.svg?react';
 import Phone from '../assets/phone-call.svg?react'
 import Camera from '../assets/camera.svg?react'
 import CameraDisabled from '../assets/camera-disabled.svg?react'
+import ScreenShare from '../assets/screen_share.svg?react'
 
 interface ActionPanelProps {
     showPhone? : boolean;
+    showScreen? : boolean;
+    screenShareDisabled? : boolean;
     audioEnabled : boolean;
     videoEnabled : boolean;
     onToggleAudio : () => void;
     onToggleVideo : () => void;
+    onToggleScreenShare? : () => void;
     onHangUp? : () => void;
 }
 
 export default function ActionPanel({
     showPhone = false,
+    showScreen = false,
+    screenShareDisabled = false,
     audioEnabled,    
     videoEnabled,
     onToggleAudio,
     onToggleVideo,
+    onToggleScreenShare,
     onHangUp
 } : ActionPanelProps) {
 
+    function handleScreenShare() {
+        if (screenShareDisabled) {
+            alert("Someone is already sharing their screen");
+            return;
+        }
+        onToggleScreenShare?.();
+    }
     return (
         <div 
             style={{
@@ -49,7 +63,8 @@ export default function ActionPanel({
                         padding : '0.5rem'
                     }}
                     onClick={onToggleAudio}
-                >{audioEnabled ? <Mic width='100%' height='100%'/> : <MicDisabled width='100%' height='100%'/>}</button>
+                >{audioEnabled ? <Mic width='100%' height='100%'/> : <MicDisabled width='100%' height='100%'/>}
+                </button>
                 <button 
                     style={{
                         height : '50px',
@@ -60,6 +75,18 @@ export default function ActionPanel({
                     }}
                     onClick={onToggleVideo}
                 >{videoEnabled ? <Camera width='100%' height='100%'/> : <CameraDisabled width='100%' height='100%'/>}</button>
+                {showScreen && <button 
+                    style={{
+                        height : '50px',
+                        width : '50px',
+                        padding : 0,
+                        borderRadius : '50%',
+                        background : 'lightgray'
+                    }}
+                    onClick={handleScreenShare}
+                >
+                    <ScreenShare/>
+                </button>}
                 {showPhone && <button 
                     style={{
                         height : '50px',
@@ -68,7 +95,9 @@ export default function ActionPanel({
                         borderRadius : '50%'    
                     }}
                     onClick={onHangUp}
-                ><Phone width='100%' height='100%'/></button>}
+                >
+                    <Phone width='100%' height='100%'/>
+                </button>}
             </div>
     )
 }
