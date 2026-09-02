@@ -1,0 +1,12 @@
+<svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Diagonal cancellation line -->
+  <line x1="2" y1="2" x2="22" y2="22" />
+  
+  <!-- Presentation screen boundary pieces (broken by the line) -->
+  <path d="M12 5H19a2 2 0 0 1 2 2v8a2 2 0 0 1-.5 1.28" />
+  <path d="M16 17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 1-1.73" />
+  
+  <!-- Stand / Podium base pieces -->
+  <path d="M12 17v4" />
+  <path d="M9 21h6" />
+</svg>

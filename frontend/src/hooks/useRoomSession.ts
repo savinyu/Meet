@@ -6,16 +6,24 @@ type Participant = {
     name : string;
     audioEnabled : boolean;
     videoEnabled : boolean;
+    sharingScreen : boolean;
+    displayStreamId : string | null;
+}
+type RemoteMedia = {
+    camera : MediaStream | null;
+    screen : MediaStream | null;
 }
 
-export default function useRoomSession(roomId : string = "", name : string, stream : MediaStream | null, audioEnabled : boolean, videoEnabled : boolean) {
+export default function useRoomSession(roomId : string = "", name : string, cameraStream : MediaStream | null, audioEnabled : boolean, videoEnabled : boolean, screenStream : MediaStream | null, stopScreenShare : () => void) {
     
     const [roomMembers, setRoomMembers] = useState<Participant[]>([]);
     const peerConnections = useRef(new Map<number, RTCPeerConnection>());
-    const [remoteStreams, setRemoteStreams] = useState(new Map<number, MediaStream>);
+    const [remoteStreams, setRemoteStreams] = useState(new Map<number, RemoteMedia>);
     const navigate = useNavigate();
     const wsRef = useRef<WebSocket>(null);
     const userIdRef = useRef<number>(null);
+    const displayStreamIdRef = useRef<string | null>(null);
+    const screenStreamRef = useRef<MediaStream | null>(null);
 
     const socketUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
@@ -24,11 +32,63 @@ export default function useRoomSession(roomId : string = "", name : string, stre
         id : -1,
         name : name,
         audioEnabled : audioEnabled,
-        videoEnabled : videoEnabled
+        videoEnabled : !!cameraStream && videoEnabled,
+        sharingScreen : false,
+        displayStreamId : null
     }
-    
+
     useEffect(() => {
-        if (!stream || roomId === "") return;
+        const ws = wsRef.current;
+        if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type : 'toggleMedia',
+                from : userIdRef.current,
+                audioEnabled : audioEnabled,
+                videoEnabled : videoEnabled
+            }));
+        }
+    }, [audioEnabled, videoEnabled]);
+
+    useEffect(() => {
+        screenStreamRef.current = screenStream;
+    }, [screenStream]);
+
+    useEffect(() => {
+        if (!screenStream) return;
+        
+        const existingSharer = roomMembers.find((member) => member.sharingScreen);
+        if (existingSharer) {
+            stopScreenShare();
+            return;
+        }
+
+        const ws = wsRef.current;
+        if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type : 'shareScreen',
+                displayStreamId : screenStream?.id,
+                from : userIdRef.current
+            }));
+        }
+        return () => {
+            peerConnections.current.forEach((pc) => {
+                pc.getSenders().forEach((sender) => {
+                    if (sender.track && screenStream.getTracks().includes(sender.track)) {
+                        pc.removeTrack(sender);
+                    }
+                });
+            })
+            if (ws?.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type : 'stopScreenShare',
+                    from : userIdRef.current
+                }));
+            }
+        }
+    }, [screenStream]);
+
+    useEffect(() => {
+        if (roomId === "") return;
 
         const ws = new WebSocket(socketUrl);
         wsRef.current = ws;
@@ -69,24 +129,50 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                 ws.send(JSON.stringify({
                     type : 'iceCandidates',
                     iceCandidates : event.candidate,
-                    from : user.id,
+                    from : userIdRef.current,
                     to : memberId
                 }));
             } 
-    
+
             //add tracks
-            stream?.getTracks().forEach((track) => {
-                pc.addTrack(track, stream);
+            cameraStream?.getTracks().forEach((track) => {
+                pc.addTrack(track, cameraStream);
             });
 
+            //if  Display Stream exists add track
+            if (screenStreamRef.current) {
+                screenStreamRef.current.getTracks().forEach((track) => {
+                    pc.addTrack(track, screenStreamRef.current!);
+                });
+            }
+
+            //negotiation
+            pc.onnegotiationneeded = async () => {
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    ws.send(JSON.stringify({
+                        type : 'createOffer',
+                        sdp : offer,
+                        from : userIdRef.current,
+                        to : memberId
+                    }));
+                } catch {}
+            }
+
             pc.ontrack = (event) => {
-                const remoteStream = event.streams[0];
-                if (!remoteStream) return;
+                const incoming = event.streams[0];
+                if (!incoming) return;
 
                 setRemoteStreams((current) => {
-                    const updated = new Map(current);
-                    updated.set(memberId,remoteStream);
-                    return updated;
+                    const next = new Map(current);
+                    const existing = next.get(memberId) ?? {camera : null, screen : null};
+                    if (incoming.id === displayStreamIdRef.current) {
+                        next.set(memberId, {...existing, screen : incoming});
+                    } else {
+                        next.set(memberId, {...existing, camera : incoming});
+                    }
+                    return next;
                 });
             }
     
@@ -137,7 +223,9 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                             id : message.participantId,
                             name : message.name,
                             audioEnabled : message.audioEnabled,
-                            videoEnabled : message.videoEnabled
+                            videoEnabled : message.videoEnabled,
+                            sharingScreen : false,
+                            displayStreamId : null
                         }]
                     });
                     break;
@@ -145,22 +233,12 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                 case 'room-members' : {
                     //gets array of participants
                     setRoomMembers(message.participants);
-                    message.participants.filter((member : Participant) => member.id !== user.id).forEach(async (member : Participant) => {
-
+                    if (message.displayStreamId) {
+                        displayStreamIdRef.current = message.displayStreamId;
+                    }
+                    message.participants.forEach(async (member : Participant) => {
                         // start a RTCPeerConnection 
-                        const pc = createPeerConnection(member.id);
-
-                        //negotiation
-                        pc.onnegotiationneeded = async () => {
-                            const offer = await pc.createOffer();
-                            pc.setLocalDescription(offer);
-                            ws.send(JSON.stringify({
-                                type : 'createOffer',
-                                sdp : offer,
-                                from : user.id,
-                                to : member.id
-                            }));
-                        }
+                        createPeerConnection(member.id);
                     });
                     break;
                 }
@@ -178,21 +256,23 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                             ws.send(JSON.stringify({
                                 type : 'iceCandidates',
                                 iceCandidates : event.candidate,
-                                from : user.id,
+                                from : userIdRef.current,
                                 to : message.from
                             }));
                         }
 
-                        await pc.setRemoteDescription(message.sdp);
-                        const answer = await pc.createAnswer();
-                        await pc.setLocalDescription(answer);
+                        try {
+                            await pc.setRemoteDescription(message.sdp);
+                            const answer = await pc.createAnswer();
+                            await pc.setLocalDescription(answer);
 
-                        ws.send(JSON.stringify({
-                            type : 'createAnswer',
-                            sdp : answer,
-                            from : user.id,
-                            to : message.from
-                        }));
+                            ws.send(JSON.stringify({
+                                type : 'createAnswer',
+                                sdp : answer,
+                                from : userIdRef.current,
+                                to : message.from
+                            }));
+                        } catch {}
                     }
 
                     respondToOffer();
@@ -203,7 +283,9 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                     async function respondToAnswer() {
                         const pc = peerConnections.current.get(message.from);
                         if (!pc) return;
-                        await pc.setRemoteDescription(message.sdp);
+                        try {
+                            await pc.setRemoteDescription(message.sdp);
+                        } catch {}
                     }
                     respondToAnswer();
                     break;
@@ -230,13 +312,47 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                     ));
                     break;
                 }
+                case 'displayStreamId' : {
+                    displayStreamIdRef.current = message.displayStreamId;
+                    setRoomMembers((current) => 
+                        current.map((member) => member.id === message.from ? {
+                            ...member,
+                            sharingScreen : true,
+                            displayStreamId : message.displayStreamId
+                            } :
+                            member    
+                        )
+                    )
+                    break;
+                }
+                case 'screenShareStopped' : {
+                    displayStreamIdRef.current = null;
+                    setRemoteStreams((current) => {
+                        const updated = new Map(current);
+                        const existing = updated.get(message.from);
+                        if (existing) {
+                            updated.set(message.from, {...existing, screen : null});
+                        }
+                        return updated;
+                    });
+                    setRoomMembers((current) => 
+                        current.map((member) => member.id === message.from ? {
+                            ...member, 
+                            sharingScreen : false, 
+                            displayStreamId : null
+                            } : 
+                            member
+                        )
+                    );
+                    break;
+                }
                 case 'participant-left' : {
                     //close the pc connection 
                     const pc = peerConnections.current.get(message.participantId);
                     pc?.close();
                     peerConnections.current.delete(message.participantId);
 
-                    //remove the stale stream
+                    //remove the stale cameraStream
                     setRemoteStreams((current) => {
                         let updated = new Map(current);
                         updated.delete(message.participantId);
@@ -250,7 +366,7 @@ export default function useRoomSession(roomId : string = "", name : string, stre
                     break;
                 }
                 default :
-
+                    //nothing
             }
         }
 
@@ -275,13 +391,21 @@ export default function useRoomSession(roomId : string = "", name : string, stre
             peerConnections.current.clear();
         }
 
-    }, [roomId, stream]);
+    }, [roomId, cameraStream]);
+
+    useEffect(() => {
+        if (!screenStream) return;
+
+        peerConnections.current.forEach((pc) => {
+            screenStream.getTracks().forEach((track) => {
+                pc.addTrack(track, screenStream);
+            })
+        });
+    }, [screenStream]);
 
     return {
         roomMembers,
-        remoteStreams,
-        wsRef,
-        userIdRef
+        remoteStreams
     }
     
 }

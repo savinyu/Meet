@@ -8,7 +8,7 @@ import UsernameInput from '../Components/UsernameInput'
 
 export default function Home() {
     const navigate = useNavigate();
-    const {stream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
+    const {cameraStream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
     const [code, setCode] = useState('');
     const [name, setName] = useState(localStorage.getItem('name') ?? "");
 
@@ -109,10 +109,11 @@ export default function Home() {
                 }}
             >
                 <VideoCard 
-                    stream={stream} 
+                    cameraStream={cameraStream} 
                     name={name} 
                     muted 
                     videoEnabled={videoEnabled} 
+                    local
                 />
             </div>
     

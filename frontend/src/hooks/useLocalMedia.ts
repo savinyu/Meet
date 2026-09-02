@@ -1,17 +1,22 @@
-import { useEffect,useState } from 'react' 
+import { useEffect, useState, useRef } from 'react' 
 
 export default function useLocalMedia() {
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
     function toggleAudio() {
         const next = !audioEnabled;
-        stream?.getAudioTracks().forEach((track) => track.enabled = next);
+        if (streamRef.current) {    
+            streamRef.current.getAudioTracks().forEach((track) => track.enabled = next);
+        }
         setAudioEnabled(next);
     }
 
     function toggleVideo() {
         const next = !videoEnabled;
-        stream?.getVideoTracks().forEach((track) => track.enabled = next);
+        if (streamRef.current) {
+            streamRef.current.getVideoTracks().forEach((track) => track.enabled = next);
+        }
         setVideoEnabled(next);
     }
 
@@ -29,12 +34,13 @@ export default function useLocalMedia() {
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({video : true, audio : true});
                 if (cancelled) {
-                    newStream?.getTracks().forEach((track) => track.stop());
+                    newStream.getTracks().forEach((track) => track.stop());
                     return;
                 }
                 newStream.getAudioTracks().forEach((track) => track.enabled = audioEnabled);
                 newStream.getVideoTracks().forEach((track) => track.enabled = videoEnabled);
-                setStream(newStream);
+                setCameraStream(newStream);
+                streamRef.current = newStream;
             } catch {
                 
             }
@@ -42,15 +48,14 @@ export default function useLocalMedia() {
         getStream();
         return () => {
             cancelled = true;
-            setStream((cur_stream) => {
-                cur_stream?.getTracks().forEach((track) => track.stop());
-                return null;
-            });
+            streamRef.current?.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+            setCameraStream(null);
         }
     }, []);
 
     return {
-        stream,
+        cameraStream,
         toggleAudio,
         toggleVideo,
         audioEnabled,
