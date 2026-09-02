@@ -8,7 +8,7 @@ import ScreenShare from '../assets/screen_share.svg?react'
 interface ActionPanelProps {
     showPhone? : boolean;
     showScreen? : boolean;
-    screenShareDisabled : boolean;
+    screenShareDisabled? : boolean;
     audioEnabled : boolean;
     videoEnabled : boolean;
     onToggleAudio : () => void;
