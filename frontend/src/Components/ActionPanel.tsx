@@ -8,7 +8,6 @@ import ScreenShare from '../assets/screen_share.svg?react'
 interface ActionPanelProps {
     showPhone? : boolean;
     showScreen? : boolean;
-    screenShareDisabled? : boolean;
     audioEnabled : boolean;
     videoEnabled : boolean;
     onToggleAudio : () => void;
@@ -20,7 +19,6 @@ interface ActionPanelProps {
 export default function ActionPanel({
     showPhone = false,
     showScreen = false,
-    screenShareDisabled = false,
     audioEnabled,    
     videoEnabled,
     onToggleAudio,
@@ -29,13 +27,6 @@ export default function ActionPanel({
     onHangUp
 } : ActionPanelProps) {
 
-    function handleScreenShare() {
-        if (screenShareDisabled) {
-            alert("Someone is already sharing their screen");
-            return;
-        }
-        onToggleScreenShare?.();
-    }
     return (
         <div 
             style={{
@@ -47,7 +38,7 @@ export default function ActionPanel({
                 color: 'white',
                 background: 'rgba(64, 64, 64, 0.75)',
                 padding: '0.6rem 1.2rem',
-                borderRadius: 999,
+                borderRadius: '100vmax',
                 display: 'flex',
                 gap: '1rem',
                 justifyContent: 'center',
@@ -83,7 +74,7 @@ export default function ActionPanel({
                         borderRadius : '50%',
                         background : 'lightgray'
                     }}
-                    onClick={handleScreenShare}
+                    onClick={onToggleScreenShare}
                 >
                     <ScreenShare/>
                 </button>}
