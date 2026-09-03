@@ -150,7 +150,8 @@ Create `backend/.env`:
 
 ```env
 PORT=3000
-CLIENT_URL=http://localhost:5173
+# Comma-separated if you have multiple frontends (e.g. old + custom domain)
+CLIENT_URL=http://localhost:5173,https://your-custom-domain.com
 ```
 
 ### Frontend

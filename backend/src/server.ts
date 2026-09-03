@@ -5,7 +5,10 @@ import cors from 'cors'
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const CLIENT_ORIGINS = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
 
 const roomManager = RoomManager.getInstance();
 // create an express server
@@ -13,7 +16,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin : CLIENT_URL
+    origin: CLIENT_ORIGINS
 }));
 
 app.post('/room', (req, res) => {
