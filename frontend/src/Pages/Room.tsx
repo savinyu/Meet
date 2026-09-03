@@ -6,6 +6,7 @@ import useLocalMedia from '../hooks/useLocalMedia'
 import VideoCard from '../Components/VideoCard';
 import ActionPanel from '../Components/ActionPanel';
 import ScreenCard from '../Components/ScreenCard'
+import Alert from '../Components/Alert'
 
 
 export default function Room() {
@@ -17,11 +18,13 @@ export default function Room() {
 
     const name = sessionStorage.getItem('displayName') || localStorage.getItem('name') || 'Anonymous';
 
-    const {roomMembers, remoteStreams} = useRoomSession(roomId, name, cameraStream, audioEnabled, videoEnabled, screenStream, stopScreenShare);
+    const {roomMembers, remoteStreams, sessionAlert, clearSessionAlert} = useRoomSession(roomId, name, cameraStream, audioEnabled, videoEnabled, screenStream, stopScreenShare);
     
     const [copied, setCopied] = useState<boolean>(false);
     const copiedTimer = useRef<number | null>(null);
-    
+    const [alertMessage, setAlertMessage] = useState<string | null>(null);
+    const message = alertMessage ?? sessionAlert;
+
     useEffect(() => {
         if (!roomId) {
             navigate('/');
@@ -55,6 +58,14 @@ export default function Room() {
             setCopied(false);
             copiedTimer.current = null;
         }, 3000);
+    }
+
+    function handleToggleScreenShare() {
+        if (someoneIsSharingScreen) {
+            setAlertMessage("Someone is already sharing");
+            return;
+        }
+        toggleScreenShare();
     }
     
     async function copyOrShare() {
@@ -137,13 +148,21 @@ export default function Room() {
                     {copied ? '✓ Copied' : 'Copy'}
                 </span>
             </div>
+            {message && (
+                <Alert
+                    message={message}
+                    handleClick={() => {
+                        clearSessionAlert();
+                        setAlertMessage(null);
+                    }}
+                />
+            )}
             <ActionPanel 
                 showPhone 
                 showScreen
-                screenShareDisabled={someoneIsSharingScreen}
                 onToggleAudio={toggleAudio}
                 onToggleVideo={toggleVideo}
-                onToggleScreenShare={toggleScreenShare}
+                onToggleScreenShare={handleToggleScreenShare}
                 audioEnabled={audioEnabled}
                 videoEnabled={videoEnabled}
                 onHangUp={() => {

@@ -25,6 +25,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
     const displayStreamIdRef = useRef<string | null>(null);
     const screenStreamRef = useRef<MediaStream | null>(null);
     const cameraStreamRef = useRef<MediaStream | null>(null);
+    const [sessionAlert, setSessionAlert] = useState<string | null>(null);
 
     const socketUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
@@ -189,7 +190,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
 
         ws.onerror = (err) => {
             console.log(err);
-            alert("WebSocket connection failed. Please reload the page.");
+            setSessionAlert("WebSocket connection failed. Please reload the page.");
         }
 
         //when websocket connection opens
@@ -212,7 +213,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
             
             switch (message.type) {
                 case 'error' : {
-                    alert(message.code)
+                    setSessionAlert(message.code)
                     if (message.code === 'room-not-found' || message.code === 'room-full') {
                         navigate('/');
                     }
@@ -423,7 +424,9 @@ export default function useRoomSession(roomId : string = "", name : string, came
 
     return {
         roomMembers,
-        remoteStreams
+        remoteStreams,
+        sessionAlert,
+        clearSessionAlert : () => setSessionAlert(null)
     }
     
 }
