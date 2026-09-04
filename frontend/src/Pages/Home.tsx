@@ -8,12 +8,12 @@ import UsernameInput from '../Components/UsernameInput'
 
 export default function Home() {
     const navigate = useNavigate();
-    const {cameraStream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia();
+    const {cameraStream, toggleAudio, toggleVideo, audioEnabled, videoEnabled} = useLocalMedia(true);
     const [code, setCode] = useState('');
     const [name, setName] = useState(localStorage.getItem('name') ?? "");
-
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      
     function resolveName(raw : string) {
         let trimmedName = raw.trim();
         if (trimmedName.length > 15) {
@@ -35,7 +35,7 @@ export default function Home() {
         const message = response.data;
 
         if (message.type !==  'error') {
-            let roomId = message.roomId;
+            const roomId = message.roomId;
             navigate(`/room/${roomId}`);
         }
     }

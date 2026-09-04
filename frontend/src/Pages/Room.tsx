@@ -74,7 +74,9 @@ export default function Room() {
             try {
                 navigator.share({title : 'Join my room :', text : roomId});
                 return;
-            } catch {}
+            } catch(err) {
+                console.log(err);
+            }
         }
     }
 

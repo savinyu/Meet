@@ -40,7 +40,16 @@ export default function useRoomSession(roomId : string = "", name : string, came
     }
 
     useEffect(() => {
+        if (!cameraStream) return;
         cameraStreamRef.current = cameraStream;
+
+        peerConnections.current.forEach((pc) => {
+            cameraStream.getTracks().forEach((track) => pc.addTrack(track, cameraStream));
+        });
+        return () => {
+            cameraStreamRef.current = null;
+        }
+
     }, [cameraStream]);
 
     useEffect(() => {
@@ -54,11 +63,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
             }));
         }
     }, [audioEnabled, videoEnabled]);
-
-    useEffect(() => {
-        screenStreamRef.current = screenStream;
-    }, [screenStream]);
-
+    
     useEffect(() => {
         if (!screenStream) return;
         
@@ -67,6 +72,12 @@ export default function useRoomSession(roomId : string = "", name : string, came
             stopScreenShare();
             return;
         }
+        
+        screenStreamRef.current = screenStream;
+
+        peerConnections.current.forEach((pc) => {
+            screenStream.getTracks().forEach((track) => pc.addTrack(track, screenStream));
+        });
 
         const ws = wsRef.current;
         if (ws?.readyState === WebSocket.OPEN) {
@@ -83,7 +94,8 @@ export default function useRoomSession(roomId : string = "", name : string, came
                         pc.removeTrack(sender);
                     }
                 });
-            })
+            });
+            screenStreamRef.current = null;
             if (ws?.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
                     type : 'stopScreenShare',
@@ -151,7 +163,9 @@ export default function useRoomSession(roomId : string = "", name : string, came
                         from : userIdRef.current,
                         to : memberId
                     }));
-                } catch {}
+                } catch(err) {
+                    console.log(err);
+                }
             }
             //add tracks
             cameraStreamRef.current?.getTracks().forEach((track) => {
@@ -281,7 +295,9 @@ export default function useRoomSession(roomId : string = "", name : string, came
                                 from : userIdRef.current,
                                 to : message.from
                             }));
-                        } catch {}
+                        } catch(err) {
+                            console.log(err);
+                        }
                     }
 
                     respondToOffer();
@@ -294,7 +310,10 @@ export default function useRoomSession(roomId : string = "", name : string, came
                         if (!pc) return;
                         try {
                             await pc.setRemoteDescription(message.sdp);
-                        } catch {}
+                        } catch(err) {
+                        console.log(err);
+
+                        }
                     }
                     respondToAnswer();
                     break;
@@ -363,7 +382,7 @@ export default function useRoomSession(roomId : string = "", name : string, came
 
                     //remove the stale cameraStream
                     setRemoteStreams((current) => {
-                        let updated = new Map(current);
+                        const updated = new Map(current);
                         updated.delete(message.participantId);
                         return updated;
                     });
@@ -401,26 +420,6 @@ export default function useRoomSession(roomId : string = "", name : string, came
         }
 
     }, [roomId]);
-
-    useEffect(() => {
-        if (!screenStream) return;
-
-        peerConnections.current.forEach((pc) => {
-            screenStream.getTracks().forEach((track) => {
-                pc.addTrack(track, screenStream);
-            })
-        });
-    }, [screenStream]);
-
-    useEffect(() => {
-        if (!cameraStream) return;
-
-        peerConnections.current.forEach((pc) => {
-            cameraStream.getTracks().forEach((track) => {
-                pc.addTrack(track, cameraStream);
-            })
-        });
-    }, [cameraStream]);
 
     return {
         roomMembers,

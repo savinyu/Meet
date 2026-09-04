@@ -21,7 +21,9 @@ export default function useScreenShare() {
                 setScreenStream(display);
 
                 display.getVideoTracks()[0].onended = () => stopScreenShare();
-            } catch {}
+            } catch(err) {
+                console.log(err);
+            }
     }
     function stopScreenShare() {
         streamRef.current?.getTracks().forEach((track) => track.stop());

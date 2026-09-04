@@ -3,14 +3,15 @@ type ScreenCardProps = {
     stream : MediaStream | null;
 }
 export default function ScreenCard({stream} : ScreenCardProps) {
-    const screenStreamRef = useRef<HTMLVideoElement>(null);
+    const screenVideoRef = useRef<HTMLVideoElement>(null);
     useEffect(() => {
-        if (screenStreamRef.current) {
-            screenStreamRef.current.srcObject = stream;
+        const screenVideoEle = screenVideoRef.current;
+        if (screenVideoEle) {
+            screenVideoEle.srcObject = stream;
         }
         return () => {
-            if (screenStreamRef.current) {
-                screenStreamRef.current.srcObject = null;
+            if (screenVideoEle) {
+                screenVideoEle.srcObject = null;
             }
         }
     },[stream]);
@@ -30,7 +31,7 @@ export default function ScreenCard({stream} : ScreenCardProps) {
                     display : 'block'
                 }}
                 muted
-                ref={screenStreamRef}
+                ref={screenVideoRef}
                 autoPlay
                 playsInline
             />
