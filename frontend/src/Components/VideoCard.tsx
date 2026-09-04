@@ -10,17 +10,15 @@ type VideoCardProps = {
 export default function VideoCard({cameraStream, videoEnabled, name, muted = false, local = false} : VideoCardProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     useEffect(() => {
-        async function playStream() {
-            if (videoRef.current) {
-                videoRef.current.srcObject = cameraStream;
-            }
-        }
-        playStream();
-        return () => {
-            if (videoRef.current) {
-                videoRef.current.srcObject = null;
-            }
-        }
+      const videoEle = videoRef.current;
+      if (videoEle) {
+          videoEle.srcObject = cameraStream;
+      }
+      return () => {
+          if (videoEle) {
+            videoEle.srcObject = null;
+          }
+      }
     },[cameraStream, videoEnabled]);
 
     return (
