@@ -140,7 +140,7 @@ export default function Room() {
             </div>
                 {stageStream && (
                     <div className='room-stage '>
-                        <ScreenCard stream={stageStream}/>
+                        <ScreenCard stream={stageStream} muted={!!screenStream}/>
                     </div>
                 )}
             <div className="room-share" onClick={copyOrShare}>

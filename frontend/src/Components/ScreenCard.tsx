@@ -1,8 +1,9 @@
 import { useRef, useEffect } from 'react'
 type ScreenCardProps = {
     stream : MediaStream | null;
+    muted : boolean;
 }
-export default function ScreenCard({stream} : ScreenCardProps) {
+export default function ScreenCard({stream, muted} : ScreenCardProps) {
     const screenVideoRef = useRef<HTMLVideoElement>(null);
     useEffect(() => {
         const screenVideoEle = screenVideoRef.current;
@@ -30,7 +31,7 @@ export default function ScreenCard({stream} : ScreenCardProps) {
                     objectFit : 'contain',
                     display : 'block'
                 }}
-                muted
+                muted={muted}
                 ref={screenVideoRef}
                 autoPlay
                 playsInline
