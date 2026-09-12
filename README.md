@@ -3,6 +3,7 @@
 A multi-party video conferencing app built on **native WebRTC** — no Zoom SDK, no Agora, no LiveKit. Up to 5 participants per room connect directly to each other in a **full-mesh topology**, with the server acting purely as a signaling relay. Media never touches the backend.
 
 **Live demo:** [meet-kohl-three.vercel.app](https://meet-kohl-three.vercel.app)
+<img width="3024" height="1654" alt="image" src="https://github.com/user-attachments/assets/61944288-c946-48be-969d-2f4404d93ded" />
 
 ---
 
@@ -195,6 +196,24 @@ Open two browser windows (or use a second device on the same network), create a 
 - **In-memory state** — rooms and participants live in a single process, so the backend does not scale horizontally as-is. Redis or a similar shared store would be the next step.
 - **One presenter at a time** — enforced on the server rather than the client, so the rule holds even under concurrent requests.
 - **No authentication** — anyone with a room code can join.
+
+---
+
+## 🎯 Why I Built This
+
+I built Meet to understand how real-time video communication works at the protocol and browser API level.
+
+Instead of relying on a third-party video calling SDK, I implemented the core communication flow using native WebRTC APIs and built the signaling layer myself.
+
+Through this project, I explored:
+
+- How WebRTC establishes peer-to-peer connections
+- SDP offer/answer negotiation
+- ICE candidate exchange
+- WebSocket-based signaling
+- Media stream management
+- Screen sharing
+- Peer connection lifecycle and cleanup
 
 ---
 
