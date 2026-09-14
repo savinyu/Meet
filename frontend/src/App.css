@@ -510,6 +510,9 @@
 .screen-card__fullscreen:focus-visible {
   opacity: 1;
 }
+.screen-card__fullscreen:hover {
+  background: rgba(0, 0, 0, 0.88);
+}
 .screen-card:fullscreen .screen-card__fullscreen {
   opacity: 1;
 }

@@ -30,7 +30,7 @@ export default function ScreenCard({stream, muted} : ScreenCardProps) {
             document.removeEventListener('fullscreenchange', handleFullScreenChange);
         }
     }, []);
-    const toggleFullScreen = async (e? : React.MouseEvent) => {
+    const toggleFullScreen = async () => {
         const container = containerRef.current;
         if (!container) return;
         try {
