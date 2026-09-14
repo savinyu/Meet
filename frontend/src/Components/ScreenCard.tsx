@@ -31,7 +31,6 @@ export default function ScreenCard({stream, muted} : ScreenCardProps) {
         }
     }, []);
     const toggleFullScreen = async (e? : React.MouseEvent) => {
-        e?.stopPropagation();
         const container = containerRef.current;
         if (!container) return;
         try {
@@ -72,6 +71,7 @@ export default function ScreenCard({stream, muted} : ScreenCardProps) {
             <button
                 className="screen-card__fullscreen"
                 onClick={toggleFullScreen}
+                onDoubleClick={(e) => e.stopPropagation()} 
                 aria-label={isFullScreen ? 'Exit full screen' : 'Full screen'}
                 title={isFullScreen ? 'Exit full screen' : 'Full screen'}
             >
