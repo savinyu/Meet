@@ -2,7 +2,7 @@
 
 A multi-party video conferencing app built on **native WebRTC** — no Zoom SDK, no Agora, no LiveKit. Up to 5 participants per room connect directly to each other in a **full-mesh topology**, with the server acting purely as a signaling relay. Media never touches the backend.
 
-**Live demo:** [meet-kohl-three.vercel.app](https://meet-kohl-three.vercel.app)
+**Live demo:** [meet.techsavy.space](https://meet.techsavy.space)
 <img width="3024" height="1654" alt="image" src="https://github.com/user-attachments/assets/61944288-c946-48be-969d-2f4404d93ded" />
 
 ---
