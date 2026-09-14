@@ -424,33 +424,108 @@
 
 .room-page--presenting {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   height: 100svh;
   padding: 60px 16px 120px;
   gap: 12px;
 }
+
 .room-page--presenting .room-stage {
-  flex: 1;
-  min-height: 0;      /* lets it actually shrink */
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0; 
+  min-height: 0;
   padding: 0;
   height: auto;
 }
-/* participants collapse into a horizontal strip while presenting */
+
 .room-page--presenting .room-grid {
+  order: 2;
   display: flex;
-  justify-content : safe center;
-  align-self : stretch;
-  margin : 0;
-  overflow-x: auto;
+  flex-direction: column;
+  flex: 0 0 200px;
+  justify-content: flex-start;
+  align-self: stretch;
   height: auto;
-  max-width : none;
-  max-height : none;
-  flex : 0 0 auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
   gap: 8px;
-  padding : 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .room-page--presenting .room-tile {
-  flex: 0 0 140px;
-  height: 100px;
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+@media (max-width: 640px) {
+  .room-page--presenting {
+    flex-direction: column;
+  }
+
+  .room-page--presenting .room-stage,
+  .room-page--presenting .room-grid {
+    order: 0;
+  }
+
+  .room-page--presenting .room-grid {
+    flex-direction: row;
+    flex: 0 0 auto;
+    justify-content: safe center;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .room-page--presenting .room-tile {
+    flex: 0 0 140px;
+    width: auto;
+    height: 100px;
+    aspect-ratio: auto;
+  }
+}
+.screen-card__fullscreen {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index : 50;
+}
+.screen-card:hover .screen-card__fullscreen,
+.screen-card__fullscreen:focus-visible {
+  opacity: 1;
+}
+.screen-card__fullscreen:hover {
+  background: rgba(0, 0, 0, 0.88);
+}
+.screen-card:fullscreen .screen-card__fullscreen {
+  opacity: 1;
+}
+/* For Safari Fullscreen */
+.screen-card:-webkit-full-screen .screen-card__fullscreen {
+  opacity : 1;
+}
+.screen-card__fullscreen svg,
+.screen-card__fullscreen svg path {
+  fill: #fff;
+}
+@media (hover: none) {
+  .screen-card__fullscreen {
+    opacity: 1;
+  }
 }
