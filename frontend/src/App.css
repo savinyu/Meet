@@ -488,3 +488,41 @@
     aspect-ratio: auto;
   }
 }
+.screen-card__fullscreen {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index : 50;
+}
+.screen-card:hover .screen-card__fullscreen,
+.screen-card__fullscreen:focus-visible {
+  opacity: 1;
+}
+.screen-card:fullscreen .screen-card__fullscreen {
+  opacity: 1;
+}
+/* For Safari Fullscreen */
+.screen-card:-webkit-full-screen .screen-card__fullscreen {
+  opacity : 1;
+}
+.screen-card__fullscreen svg,
+.screen-card__fullscreen svg path {
+  fill: #fff;
+}
+@media (hover: none) {
+  .screen-card__fullscreen {
+    opacity: 1;
+  }
+}
